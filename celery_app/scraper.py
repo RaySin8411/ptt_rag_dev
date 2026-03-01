@@ -45,9 +45,14 @@ def get_urls_from_board_html(html: str) -> list:
 def get_data_from_article_html(html: str) -> dict:
     html_soup = BeautifulSoup(html, 'html.parser')
     article_soup = html_soup.find('div', class_='bbs-screen bbs-content')
-    title = article_soup.find_all('span', class_='article-meta-value')[2].text
-    author = article_soup.find_all('span', class_='article-meta-value')[0].text.strip(')').split(' (')[0]
-    time_str = article_soup.find_all('span', class_='article-meta-value')[3].text
+    try:
+        title = article_soup.find_all('span', class_='article-meta-value')[2].text
+        author = article_soup.find_all('span', class_='article-meta-value')[0].text.strip(')').split(' (')[0]
+        time_str = article_soup.find_all('span', class_='article-meta-value')[3].text
+    except IndexError:
+        title = ''
+        author = ''
+        time_str = 'Thu Feb 26 00:00:00 2026'
     dt = datetime.strptime(time_str, "%a %b %d %H:%M:%S %Y")
     dt = dt.replace(tzinfo=ZoneInfo("Asia/Taipei"))
     post_time = dt.strftime("%Y-%m-%d %H:%M:%S")
