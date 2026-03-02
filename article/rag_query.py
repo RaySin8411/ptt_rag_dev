@@ -45,7 +45,7 @@ def run_rag_query(question, top_k):
         return {"error": f"從資料庫找出文章內容發生錯誤: {str(e)}"}
     try:
         model = ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash",
+            model="gemini-2.5-flash",
             temperature=0,
             google_api_key=env_settings.GOOGLE_API_KEY,
         )
