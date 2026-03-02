@@ -12,12 +12,14 @@ from zoneinfo import ZoneInfo
 from article.models import Article
 from app.celery import app
 from log_app.models import Log
+from celery import chain
+from celery_app.data_processing import store_data_in_pinecone
 
 @app.task()
 def period_send_ptt_scrape_task():
     board_list = ['Gossiping', 'NBA', 'Stock', 'LoL', 'home-sale']
     for board in board_list:
-        ptt_scrape(board)
+        chain(ptt_scrape.s(board), store_data_in_pinecone.s())()
 
 
 def get_html(url: str) -> str:
