@@ -19,7 +19,7 @@ from celery_app.data_processing import store_data_in_pinecone
 def period_send_ptt_scrape_task():
     board_list = ['Gossiping', 'NBA', 'Stock', 'LoL', 'home-sale']
     for board in board_list:
-        chain(ptt_scrape.s(board), store_data_in_pinecone.s())()
+        chain(ptt_scrape(board), store_data_in_pinecone())()
 
 
 def get_html(url: str) -> str:
