@@ -174,7 +174,7 @@ class SearchAPIView(APIView):
         # 請求 ChatGPT 回答問題
         try:
             model = ChatGoogleGenerativeAI(
-                model="gemini-2.0-flash",
+                model="gemini-2.5-flash",
                 temperature=0,
                 google_api_key=env_settings.GOOGLE_API_KEY,
             )
