@@ -5,9 +5,19 @@ from rest_framework.views import APIView
 from rest_framework.pagination import LimitOffsetPagination
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse, inline_serializer
 from .models import Article
-from .serializers import ArticleSerializer, ArticleListRequestSerializer
-import traceback
+from .serializers import ArticleSerializer, ArticleListRequestSerializer, QueryRequestSerializer
+from .rag_query import run_rag_query
 from log_app.models import Log
+from langchain_google_genai import ChatGoogleGenerativeAI,GoogleGenerativeAIEmbeddings
+from env_settings import EnvSettings
+from langchain_pinecone import PineconeVectorStore
+from pinecone import Pinecone
+from langchain_core.prompts import PromptTemplate
+from pydantic import SecretStr
+
+import traceback
+
+env_settings = EnvSettings()
 
 
 def articles_filter(article_list_request_serializer):
@@ -110,3 +120,23 @@ class ArticleStatisticsView(APIView):
         articles = articles_filter(article_list_request_serializer)
         total_articles = articles.count()
         return Response({"total_articles": total_articles})
+
+
+class SearchAPIView(APIView):
+    @extend_schema(
+        methods=("POST",),
+        description="輸入question(問題)與top_k(想查詢的文章片段數)，藉由LLM與向量資料庫得到question、answer(相關回答)、related_articles(相關文章)。",
+        request=QueryRequestSerializer,
+        responses=QueryRequestSerializer
+    )
+    def post(self, request):
+        query_request_serializer = QueryRequestSerializer(data=request.data)
+        if not query_request_serializer.is_valid():
+            Log.objects.create(level='ERROR', category='user-search', message='查詢參數不合法', )
+            return Response(query_request_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        question = query_request_serializer.validated_data.get("question")
+        top_k = query_request_serializer.validated_data.get("top_k")
+        result = run_rag_query(question, top_k)
+        if "error" in result:
+            return Response(result, status=status.HTTP_400_BAD_REQUEST)
+        return Response(result)
